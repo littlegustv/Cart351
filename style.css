@@ -4,7 +4,7 @@
 }
 body {
 	font-family: monospace;
-	background-image: url('background.jpg');
+	background-image: url('images/background.jpg');
 	background-size: cover;
 }
 a {
@@ -61,7 +61,7 @@ article {
   box-sizing: border-box;
   transform: rotate(30deg);
   transition: transform 0.5s;
-  background-image: url('gear.png');
+  background-image: url('images/gear.png');
   background-size: cover;
   margin-bottom: -32px;
 }
