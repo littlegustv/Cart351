@@ -1,0 +1,113 @@
+* {
+	margin: 0;
+	padding: 0;
+}
+body {
+	font-family: monospace;
+	background-image: url('images/background.jpg');
+	background-size: cover;
+}
+a {
+	text-decoration: none;
+}
+ul.list-unstyled li {
+	list-style: none;
+}
+
+/* Grid */
+.container {
+	max-width: 800px;
+	margin: auto;
+	overflow: hidden;
+}
+
+header {
+	font-size: 3em;
+	text-align: center;
+	letter-spacing: 10px;
+	font-family: monospace;
+	color: white;
+}
+
+nav {
+	text-align: center;
+	overflow: hidden;
+	position: sticky;
+	top: 0px;
+	background: #1e1b1b;
+	z-index: 100;
+	color: white;
+}
+
+nav a {
+	color: #1e1b1b;
+	background: white;
+	display: inline-block;
+	padding: 0px 4px;
+	border-radius: 3px;
+}
+
+nav div.nav-block {
+	display: inline-block;
+	padding: 10px;
+	box-sizing: border-box;
+}
+
+article {
+	width: 50%;
+  display: block;
+  position: relative;
+  margin: auto;
+  box-sizing: border-box;
+  transform: rotate(30deg);
+  transition: transform 0.5s;
+  background-image: url('images/gear.png');
+  background-size: cover;
+  margin-bottom: -32px;
+}
+article:nth-child(2) {
+	left: 32px;
+}
+article:nth-child(3) {
+	left: -75px;
+  top: -16px;
+}
+article:after {
+	content: '';
+	display: block;
+	padding-bottom: 100%;
+}
+article > div.body {
+	position: absolute;
+	width: 100%;
+	text-align: center;
+	top: 50%;
+  transform: translateY(-50%) rotate(-30deg);
+  transition: transform 0.8s;
+}
+article:hover {
+	transform: rotate(0deg);
+}
+article:hover + article {
+	transform: rotate(60deg);
+}
+article:hover > div.body {
+  transform: translateY(-50%) rotate(0deg);
+}
+article h3 {
+  color: white;
+  text-transform: lowercase;
+  font-weight: normal;
+  margin-top: 5px;
+}
+article a {
+	display: inline-block;
+	background: #2c2c2c;
+	color: white;
+	padding: 0px 5px;
+	border-radius: 3px;
+	font-weight: bold;
+}
+a[href=""], a:visited, a:hover, a:active {
+	opacity: 0.7;
+}
