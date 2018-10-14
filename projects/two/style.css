@@ -1,0 +1,53 @@
+body {
+  text-align: center;
+  font-family: Ubuntu, sans-serif;
+  background-image: url('fabric_dark.png');
+}
+main {
+  width: 480px;
+  margin: auto;             
+}
+canvas {
+  width: 480px;
+  height: 480px;
+  margin-bottom: 20px;
+  border: 1px dashed #ccc;
+  box-sizing: border-box;
+}
+div.rule {
+  margin: 10px 40px;
+  border-top: 1px dashed #ccc;
+}
+div.button-group > a {
+  text-decoration: none;
+  color: white;
+  font-weight: bold;
+  padding: 10px;
+  width: 100%;
+}
+div.button-group > a:nth-child(even) {
+  background: rgba(0,0,0,0.5);;
+}
+div.button-group > a.key:hover {
+  opacity: 0.5;
+}
+div.button-group {
+  margin: 0px;
+  width: 100%;
+  display: flex;
+  border-radius: 5px;
+  overflow: hidden;
+}
+div.button-group > input, div.button-group > label, div.button-group > select {
+  width: 100%;
+}
+div.button-group input, div.button-group select {
+  font-size: 16px;
+  color: #666;
+  border: 1px solid #ccc;
+  padding: 12px;
+  background-color: white;
+}
+div.button-group input[type=number] {
+  width: 25%;
+}
