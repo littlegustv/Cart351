@@ -1,50 +1,18 @@
 <!-- 
 
-TODO (saturday):
-
-1. add aiming?
-2. replace 'scales' with 'chords'?
-3. make key/chord changes universal
-
 TODO (sunday)
 
+0. documentation, storyboard, etc.
+  - originally going to be completely random, like bell-tolling
+  - no gravity, bouncing between shapes (too hard!)
+  - changed into weird random-y instrument, that can play "chords"
 1. make UI really nice!
-2. add instrument/select/delete controls (change key of all notes, delete instrument, change instrument type, etc.)
-
-IDEAS:
-
-1. can add 'instruments' 
-  - balls 'belong' to specific instruments
-  - each instrument can be muted/solo'd, can have parameters changed
-  - can ... load an image for each instrument? or color?
-
-  - a new class ... contains DOM elements
-
-2. choose a scale, an octave - then a row a of 'keys' for that scale
-
-CONTROLS:
-
-1. ability to switch between 'snap-to-angle' and free-form
-3. two-step-process - SIZE of shape = 'sustain'/duration, then direction & speed
-?? 4. ability to 'grab' shapes as well
-?? 5. ability to create 'solid' shapes that are bounced-off of, but don't create a sound (i.e. rectangles)
+  - buttons should just be 'indicators'
+3. add 'submit' button so you can do changes all at once (key, octave, scale)
+4. does the place the 'notes' spawn depend on 'keyboard?'
 7. reset button
 
-INTERACTION:
-
-1. toggle whether shapes hit/bounce off each other (either global, or checkbox when creating shape)
-  - figure out inter-shape collisions and bouncing!
-2. ability to record results??
-
-UI:
-
-# VISUALS -> color, pattern, size, "shape" - but inside circle for collision purposes?
-# AUDIO   -> note, octave, volume, type/tone, sustain/duration
-
-BUGS:
-
-- when you move mouse outside of canvas and then release - just annoying!
-- use separate audiocontexts to prevent clipping?
+8. separate instruments at different octaves, but share keys?
 
 -->
 <!DOCTYPE html>
@@ -223,6 +191,22 @@ BUGS:
             'C8': 4186.01
         }
 
+        let colors = [
+          "#9400D3",
+          // "#6f00aa",
+          "#4B0082",
+          // "#2500c0",
+          "#0000FF",
+          // "#007f7f",
+          "#00FF00",
+          // "#7fff00",
+          "#FFFF00",
+          // "#ffbf00",
+          "#FF7F00",
+          // "#ff3f00",
+          "#FF0000"
+        ];
+
         const THRESHOLD = 100;
 
         let canvas = document.getElementById('canvas');
@@ -243,19 +227,20 @@ BUGS:
         let octave = 4;
         let sustain = 2;
         let type = 'sine';
+        let tonic = 0;
         let note = 'C4';
 
         let octaveselector = document.getElementById("octave");
-        octaveselector.addEventListener('input', function (e) {
-          octave = parseInt(octaveselector.value);
-          update_keys();
-        });
+        // octaveselector.addEventListener('input', function (e) {
+        //   octave = parseInt(octaveselector.value);
+        //   update_keys();
+        // });
 
         let scaleselector = document.getElementById("scale");
-        scaleselector.addEventListener('input', function (e) {
-          scalesteps = JSON.parse(scaleselector.value);
-          update_keys();
-        });
+        // scaleselector.addEventListener('input', function (e) {
+        //   scalesteps = JSON.parse(scaleselector.value);
+        //   update_keys();
+        // });
 
         let sustainselector = document.getElementById('sustain');
         sustainselector.addEventListener('input', function (e) {
@@ -265,6 +250,18 @@ BUGS:
         let typeselector = document.getElementById('type');
         typeselector.addEventListener('input', function () {
           type = this.value;
+        });
+
+        let tonicselector = document.getElementById('tonic');
+        // tonicselector.addEventListener('input', function () {
+        // });
+
+        let changebutton = document.getElementById('change');
+        change.addEventListener('click', function () {
+          tonic = parseInt(tonicselector.value);
+          scalesteps = JSON.parse(scaleselector.value);
+          octave = parseInt(octaveselector.value);
+          update_keys();
         });
 
         let keys = document.getElementsByClassName("key");
@@ -289,10 +286,11 @@ BUGS:
 
         function update_keys() {
           scale = scalesteps.map(function (n) {
-            return steps[n % steps.length] + "" + (octave + Math.floor(n / steps.length));
+            return steps[(n + tonic) % steps.length] + "" + (octave + Math.floor(n / steps.length));
           });
           for (let i = 0; i < keys.length; i++) {
             keys[i].text = scale[i];
+            keys[i].style.background = colors[i % colors.length];
           }
         }
         update_keys();
@@ -313,13 +311,13 @@ BUGS:
           return "#" + r + g + b;
         }
         class Ellipse {
-          constructor (x, y, radius, note) {
+          constructor (x, y, radius, key) {
             this.alive = true;
             this.sustain = sustain;//Math.random() * 3 + 1;
-            this.note = note;
+            this.key = key;
             this.type = "sine";
             this.opacity = 1;
-            this.color = random_color();
+            this.color = colors[this.key % colors.length]; //random_color();
             this.x = x, this.y = y, this.radius = radius, 
             this.velocity = {x: Math.floor(Math.random() * 80) - 40, y: -200};
             this.acceleration = {x: 0, y: 400};
@@ -346,7 +344,7 @@ BUGS:
             osc.connect(gn);
             gn.connect(compressor);
             compressor.connect(audioctx.destination);
-            osc.frequency.value = notes[this.note];
+            osc.frequency.value = notes[scale[this.key]];
             osc.start();
             gn.gain.setValueAtTime(this.opacity, audioctx.currentTime);
             gn.gain.exponentialRampToValueAtTime( 0.00001, audioctx.currentTime + this.sustain);
@@ -372,10 +370,10 @@ BUGS:
                 this.alive = false;
               }
             }
-            if ((this.x > (canvas.width - this.radius)) || (this.x < this.radius)) {
-              this.x = Math.min(canvas.width - this.radius, Math.max(this.radius, this.x));
+            if ((this.x > canvas.width - this.radius) || (this.x < this.radius)) {
+              this.x = clamp(this.x, this.radius, canvas.width - this.radius);
               this.velocity.x *= -1;
-              this.play();              
+              // this.play();              
             }
             if (this.grow) {
               this.radius += dt * GROWRATE;
@@ -448,35 +446,35 @@ BUGS:
         let mouse = {start: {x: 0, y: 0}, end: {x: 0, y: 0}, down: false};
         let entity = undefined;
 
-        canvas.addEventListener('mousedown', function (e) {
-          mouse.start.x = e.offsetX;
-          mouse.start.y = e.offsetY;
-          mouse.end.x = e.offsetX;
-          mouse.end.y = e.offsetY;
-          mouse.down = true;
-          if (type == "sine") {
-            entity = new Ellipse(e.offsetX, e.offsetY, 16, note, 0);            
-          } else if (type == "square") {
-            entity = new Square(e.offsetX, e.offsetY, 16, note, 0);
-          } else if (type == "triangle") {
-            entity = new Triangle(e.offsetX, e.offsetY, 16, note, 0);
-          } else if (type == "sawtooth") {
-            entity = new Saw(e.offsetX, e.offsetY, 16, note, 0);
-          }
-          entities.push(entity);
-        });
+        // canvas.addEventListener('mousedown', function (e) {
+        //   mouse.start.x = e.offsetX;
+        //   mouse.start.y = e.offsetY;
+        //   mouse.end.x = e.offsetX;
+        //   mouse.end.y = e.offsetY;
+        //   mouse.down = true;
+        //   if (type == "sine") {
+        //     entity = new Ellipse(e.offsetX, e.offsetY, 16, note, 0);            
+        //   } else if (type == "square") {
+        //     entity = new Square(e.offsetX, e.offsetY, 16, note, 0);
+        //   } else if (type == "triangle") {
+        //     entity = new Triangle(e.offsetX, e.offsetY, 16, note, 0);
+        //   } else if (type == "sawtooth") {
+        //     entity = new Saw(e.offsetX, e.offsetY, 16, note, 0);
+        //   }
+        //   entities.push(entity);
+        // });
 
-        canvas.addEventListener('mouseup', function (e) {
-          entity.angle = Math.atan2(mouse.end.y - mouse.start.y, mouse.end.x - mouse.start.x);
-          entity.speed = distance(mouse.start.x, mouse.start.y, mouse.end.x, mouse.end.y);
-          mouse.down = false;
-          entity = undefined;
-        });
+        // canvas.addEventListener('mouseup', function (e) {
+        //   entity.angle = Math.atan2(mouse.end.y - mouse.start.y, mouse.end.x - mouse.start.x);
+        //   entity.speed = distance(mouse.start.x, mouse.start.y, mouse.end.x, mouse.end.y);
+        //   mouse.down = false;
+        //   entity = undefined;
+        // });
 
-        canvas.addEventListener('mousemove', function (e) {
-          mouse.end.x = e.offsetX;
-          mouse.end.y = e.offsetY;
-        });
+        // canvas.addEventListener('mousemove', function (e) {
+        //   mouse.end.x = e.offsetX;
+        //   mouse.end.y = e.offsetY;
+        // });
 
         let keydown = -1;
         let keystrength = 0;
@@ -485,16 +483,16 @@ BUGS:
           if (keydown == -1) {
             keydown = keycodes.indexOf(e.keyCode);            
             if (keydown != -1) {
-              note = scale[keydown];
+              // note = scale[keydown];
               let x = Math.floor(Math.random() * (canvas.width - 40) + 20);            
               if (type == "sine") {
-                entity = new Ellipse(x, canvas.height - 18, 16, note, 0);            
+                entity = new Ellipse(x, canvas.height - 18, 16, keydown, 0);            
               } else if (type == "square") {
-                entity = new Square(x, canvas.height - 18, 16, note, 0);
+                entity = new Square(x, canvas.height - 18, 16, keydown, 0);
               } else if (type == "triangle") {
-                entity = new Triangle(x, canvas.height - 18, 16, note, 0);
+                entity = new Triangle(x, canvas.height - 18, 16, keydown, 0);
               } else if (type == "sawtooth") {
-                entity = new Saw(x, canvas.height - 18, 16, note, 0);
+                entity = new Saw(x, canvas.height - 18, 16, keydown, 0);
               }
             }
           } 
@@ -603,7 +601,26 @@ BUGS:
         <a href="" data-key="6" id="6" class="key">6</a>
         <a href="" data-key="7" id="7" class="key">7</a>
       </div>
+      <select name="" id="tonic">
+        <option value="0">C</option>
+        <option value="1">C#</option>
+        <option value="2">D</option>
+        <option value="3">D#</option>
+        <option value="4">E</option>
+        <option value="5">F</option>
+        <option value="6">F#</option>
+        <option value="7">G</option>
+        <option value="8">G#</option>
+        <option value="9">A</option>
+        <option value="10">A#</option>
+        <option value="11">B</option>
+      </select>
       <select name="" id="scale">
+        <option value="[0,3,7,12,15,19,24,27]" selected="selected">minor chord</option>
+        <option value="[0,4,7,12,16,19,24,28]">major chord</option>
+        <option value="[0,4,7,10,12,16,19,22]">major 7th chord</option>
+        <option value="[0,3,7,10,12,15,19,22]">minor 7th chord</option>
+        <option value="[0,3,6,12,15,18,24,27]">minor dim chord</option>
         <option value="[0,2,4,5,7,9,11,12]">ionian</option>
         <option value="[0,2,3,5,7,9,10,12]">dorian</option>
       </select>
@@ -611,6 +628,7 @@ BUGS:
         Octave: 
         <input type="number" value="4" min="0" max="7" step="1" id="octave">
       </label>
+      <input type="submit" id="change" value="change">
       <p>
         <input type="range" value="2" min="0.2" max="5" step="0.1" id="sustain">
       </p>
