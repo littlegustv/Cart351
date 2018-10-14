@@ -1,15 +1,34 @@
 <!-- 
 
+TODO (saturday):
+
+1. add aiming?
+2. replace 'scales' with 'chords'?
+3. make key/chord changes universal
+
+TODO (sunday)
+
+1. make UI really nice!
+2. add instrument/select/delete controls (change key of all notes, delete instrument, change instrument type, etc.)
+
 IDEAS:
+
+1. can add 'instruments' 
+  - balls 'belong' to specific instruments
+  - each instrument can be muted/solo'd, can have parameters changed
+  - can ... load an image for each instrument? or color?
+
+  - a new class ... contains DOM elements
+
+2. choose a scale, an octave - then a row a of 'keys' for that scale
 
 CONTROLS:
 
 1. ability to switch between 'snap-to-angle' and free-form
-2. select scale, auto-generate buttons to choose notes (octave slider as well?)
 3. two-step-process - SIZE of shape = 'sustain'/duration, then direction & speed
-4. ability to 'grab' shapes as well
-5. ability to create 'solid' shapes that are bounced-off of, but don't create a sound (i.e. rectangles)
-6. ability to set VOLUME of shapes
+?? 4. ability to 'grab' shapes as well
+?? 5. ability to create 'solid' shapes that are bounced-off of, but don't create a sound (i.e. rectangles)
+7. reset button
 
 INTERACTION:
 
@@ -33,8 +52,37 @@ BUGS:
   <head>
     <meta charset="utf-8">
     <title></title>
+    <style>
+      body {
+        text-align: center;
+      }
+      main {
+        width: 480px;
+        margin: auto;             
+      }
+      canvas {
+        width: 480px;
+        height: 480px;
+        border: 1px solid black;   
+      }
+      .key {
+        text-decoration: none;
+        border: 1px solid black;
+        color: black;
+        padding: 10px;
+        border-radius: 3px;
+      }
+      .key:hover {
+        background: black;
+        color: white;
+      }
+      .button-group {
+        margin: 20px;
+      }
+    </style>
     <script type="text/javascript">
       window.onload = function () {
+        var steps = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
         var notes = {
             'C0': 16.35,
             'C#0': 17.32,
@@ -175,16 +223,85 @@ BUGS:
             'C8': 4186.01
         }
 
+        const THRESHOLD = 100;
+
         let canvas = document.getElementById('canvas');
         let ctx = canvas.getContext('2d');
 
         let audioctx = new AudioContext();
+        let compressor = audioctx.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-50, audioctx.currentTime);
+        compressor.knee.setValueAtTime(40, audioctx.currentTime);
+        // compressor.ratio.setValueAtTime(12, audioctx.currentTime);
+        // compressor.attack.setValueAtTime(0, audioctx.currentTime);
+        // compressor.release.setValueAtTime(0.25, audioctx.currentTime);
+
         // let scale = ["C4", "D#4", "F4", "F#4", "G4", "A#4", "C5"];
-        let scale = ["C4", "D#4", "F4", "G4", "A#4", "C5"];
+        let scalesteps = [0,3,7,12,15,19,24,27];
+        let scale = ["C4", "D#4", "F4", "F#4", "G4", "A#4", "C5", "D#5"];
+
+        let octave = 4;
+        let sustain = 2;
+        let type = 'sine';
+        let note = 'C4';
+
+        let octaveselector = document.getElementById("octave");
+        octaveselector.addEventListener('input', function (e) {
+          octave = parseInt(octaveselector.value);
+          update_keys();
+        });
+
+        let scaleselector = document.getElementById("scale");
+        scaleselector.addEventListener('input', function (e) {
+          scalesteps = JSON.parse(scaleselector.value);
+          update_keys();
+        });
+
+        let sustainselector = document.getElementById('sustain');
+        sustainselector.addEventListener('input', function (e) {
+          sustain = parseFloat(this.value);
+        });
+
+        let typeselector = document.getElementById('type');
+        typeselector.addEventListener('input', function () {
+          type = this.value;
+        });
+
+        let keys = document.getElementsByClassName("key");
+        for (let i = 0; i < keys.length; i++) {
+          keys[i].addEventListener('click', function (e) {
+            e.preventDefault();
+            let n = scale[parseInt(this.dataset['key'])];
+            note = n;
+            // console.log('hey', n);
+            // let osc = audioctx.createOscillator();
+            // let gn = audioctx.createGain();
+            // osc.type = type;
+            // osc.connect(gn);
+            // gn.connect(audioctx.destination);
+            // osc.frequency.value = notes[n];
+            // osc.start();
+            // gn.gain.exponentialRampToValueAtTime( 0.00001, audioctx.currentTime + sustain);
+          });
+        }
 
         const GROWRATE = 40;
+
+        function update_keys() {
+          scale = scalesteps.map(function (n) {
+            return steps[n % steps.length] + "" + (octave + Math.floor(n / steps.length));
+          });
+          for (let i = 0; i < keys.length; i++) {
+            keys[i].text = scale[i];
+          }
+        }
+        update_keys();
+
         function distance(x1, y1, x2, y2) {
           return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+        }
+        function clamp(n, min, max) {
+          return Math.max(Math.min(n, max), min);
         }
         function choose(arr) {
           return arr[Math.floor(Math.random() * arr.length)];
@@ -196,55 +313,68 @@ BUGS:
           return "#" + r + g + b;
         }
         class Ellipse {
-          constructor (x, y, radius, color, speed = 10) {
-            this.sustain = Math.random() * 3 + 1;
-            this.note = choose(scale);
-            this.type = choose(["sine", "sawtooth", "square", "triangle"]);
-
+          constructor (x, y, radius, note) {
+            this.alive = true;
+            this.sustain = sustain;//Math.random() * 3 + 1;
+            this.note = note;
+            this.type = "sine";
             this.opacity = 1;
-            this.x = x, this.y = y, this.radius = radius, this.color = color, this.speed = speed;
+            this.color = random_color();
+            this.x = x, this.y = y, this.radius = radius, 
+            this.velocity = {x: Math.floor(Math.random() * 80) - 40, y: -200};
+            this.acceleration = {x: 0, y: 400};
+            this.maxvelocity = 640;
             this.angle = Math.random() *  Math.PI * 2;
           }
-          shape (ctx, w, n) {
-            if (w > 4) {
-              if (n % 2 == 0) {
-                ctx.fillStyle = this.color;
-              } else {
-                ctx.fillStyle = "white";
-              }
-              ctx.beginPath();
-              ctx.arc(this.x, this.y + (n % 2), w, 0, 2 * Math.PI, true);
-              ctx.closePath();
-              ctx.fill();
-              this.shape(ctx, w - 4, n + 1);
-            }
+          shape (ctx, w) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, w, 0, 2 * Math.PI, true);
+            ctx.closePath();
+            ctx.fill();
           }
           draw (ctx) {
             ctx.globalAlpha = this.opacity;
-            this.shape(ctx, this.radius, 0);
+            ctx.fillStyle = this.color;
+            this.shape(ctx, this.radius);
             ctx.globalAlpha = 1;
           }
           play () {
             let osc = audioctx.createOscillator();
             let gn = audioctx.createGain();
             osc.type = this.type;
+            //osc.connect(gn);
             osc.connect(gn);
-            gn.connect(audioctx.destination);
+            gn.connect(compressor);
+            compressor.connect(audioctx.destination);
             osc.frequency.value = notes[this.note];
             osc.start();
+            gn.gain.setValueAtTime(this.opacity, audioctx.currentTime);
             gn.gain.exponentialRampToValueAtTime( 0.00001, audioctx.currentTime + this.sustain);
           }
           update (dt) {
-            this.x += this.speed * Math.cos(this.angle) * dt;
-            this.y += this.speed * Math.sin(this.angle) * dt;
+            if (this.alive == false) {
+              this.opacity = clamp(this.opacity - dt, 0, 1);
+            }
+            this.velocity.x = clamp(this.velocity.x + this.acceleration.x * dt, -this.maxvelocity, this.maxvelocity);
+            this.velocity.y = clamp(this.velocity.y + this.acceleration.y * dt, -this.maxvelocity, this.maxvelocity);
+
+            this.x += this.velocity.x * dt;
+            this.y += this.velocity.y * dt;
+            
+            // this.x += this.speed * Math.cos(this.angle) * dt;
+            // this.y += this.speed * Math.sin(this.angle) * dt;
             if ((this.y > (canvas.height - this.radius)) || (this.y < this.radius)) {
               this.y = Math.min(canvas.height - this.radius, Math.max(this.radius, this.y));
-              this.angle = 2 * Math.PI - this.angle;
+              //this.angle = 2 * Math.PI - this.angle;
+              this.velocity.y *= -1;
               this.play();
+              if (Math.abs(this.velocity.y) < THRESHOLD) {
+                this.alive = false;
+              }
             }
             if ((this.x > (canvas.width - this.radius)) || (this.x < this.radius)) {
               this.x = Math.min(canvas.width - this.radius, Math.max(this.radius, this.x));
-              this.angle = 3 * Math.PI - this.angle;
+              this.velocity.x *= -1;
               this.play();              
             }
             if (this.grow) {
@@ -270,63 +400,69 @@ BUGS:
             return distance(this.x, this.y, x, y) < (this.radius + w);
           }
         }
+
         class Square extends Ellipse {
-          constructor(x, y, w, color, speed = 10) {
-            super(x, y, w, color, speed);
-            this.x = x;
-            this.y = y;
-            this.radius = w;
-            this.speed = speed;
-            this.color = color;
-            this.angle = Math.random() * Math.PI * 2;
+          constructor (x, y, radius, note, speed = 10) {
+            super(x, y, radius, note, speed);
+            this.type = 'square';
           }
           shape (ctx, w) {
-            if (w >= 4) {
-              ctx.fillStyle = this.color;
-              ctx.beginPath();
-              ctx.arc(this.x, this.y, w, 0, Math.PI * 2, true);
-              ctx.closePath();
-              ctx.fill();
-              ctx.fillStyle = "white";
-              ctx.beginPath();
-              ctx.moveTo(this.x, this.y - w);
-              ctx.lineTo(this.x + w, this.y);
-              ctx.lineTo(this.x, this.y + w);
-              ctx.lineTo(this.x - w, this.y);
-              ctx.closePath();
-              ctx.fill();
-              ctx.fillStyle = this.color;
-              ctx.fillRect(this.x - w / 2, this.y - w / 2, w, w);
-              this.shape(ctx, w / 2);
-            }
-          }
-          draw (ctx) {
-            ctx.globalAlpha = this.opacity;
-            this.shape(ctx, this.radius);
-            ctx.globalAlpha = 1;
-          }
-          overlap(x, y, w = 0) {
-            return distance(this.x, this.y, x, y) < (this.radius + w);
+            ctx.fillRect(this.x - w, this.y - w, 2 * w, 2 * w);
           }
         }
+
+        class Triangle extends Ellipse {
+          constructor (x, y, radius, note, speed = 10) {
+            super(x, y, radius, note, speed);
+            this.type = 'triangle';
+          }
+          shape (ctx, w) {
+            ctx.beginPath();
+            ctx.moveTo(this.x - w, this.y + w);
+            ctx.lineTo(this.x + w, this.y + w);
+            ctx.lineTo(this.x, this.y - w);
+            ctx.closePath();
+            ctx.fill();
+          }
+        }
+
+        class Saw extends Ellipse {
+          constructor (x, y, radius, note, speed = 10) {
+            super(x, y, radius, note, speed);
+            this.type = 'sawtooth';
+          }
+          shape (ctx, w) {
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y - w);
+            ctx.lineTo(this.x - w / 2, this.y + 2 * w / 3);
+            ctx.lineTo(this.x + w, this.y - w / 3);
+            ctx.lineTo(this.x - w, this.y - w / 3);
+            ctx.lineTo(this.x + w / 2, this.y + 2 * w / 3);
+            ctx.closePath();
+            ctx.fill();
+          }
+        }
+
         let entities = [];
-        // for (let i = 0; i < 10; i++) {
-        //   let s = new Square(Math.random() * 640, Math.random() * 480, Math.random() * 12 + 24, random_color(), Math.random() * 80 + 30);
-        //   entities.push(s);
-        //   let e = new Ellipse(Math.random() * 640, Math.random() * 480, Math.random() * 32 + 16, random_color(), Math.random() * 100 + 25);
-        //   entities.push(e);
-        // }
 
         let mouse = {start: {x: 0, y: 0}, end: {x: 0, y: 0}, down: false};
         let entity = undefined;
 
         canvas.addEventListener('mousedown', function (e) {
-          mouse.start.x = e.clientX;
-          mouse.start.y = e.clientY;
-          mouse.end.x = e.clientX;
-          mouse.end.y = e.clientY;
+          mouse.start.x = e.offsetX;
+          mouse.start.y = e.offsetY;
+          mouse.end.x = e.offsetX;
+          mouse.end.y = e.offsetY;
           mouse.down = true;
-          entity = new Ellipse(e.clientX, e.clientY, 32, random_color(), 0);
+          if (type == "sine") {
+            entity = new Ellipse(e.offsetX, e.offsetY, 16, note, 0);            
+          } else if (type == "square") {
+            entity = new Square(e.offsetX, e.offsetY, 16, note, 0);
+          } else if (type == "triangle") {
+            entity = new Triangle(e.offsetX, e.offsetY, 16, note, 0);
+          } else if (type == "sawtooth") {
+            entity = new Saw(e.offsetX, e.offsetY, 16, note, 0);
+          }
           entities.push(entity);
         });
 
@@ -338,8 +474,43 @@ BUGS:
         });
 
         canvas.addEventListener('mousemove', function (e) {
-          mouse.end.x = e.clientX;
-          mouse.end.y = e.clientY;
+          mouse.end.x = e.offsetX;
+          mouse.end.y = e.offsetY;
+        });
+
+        let keydown = -1;
+        let keystrength = 0;
+        let keycodes = [65, 83, 68, 70, 71, 72, 74, 75];
+        document.addEventListener('keydown', function (e) {
+          if (keydown == -1) {
+            keydown = keycodes.indexOf(e.keyCode);            
+            if (keydown != -1) {
+              note = scale[keydown];
+              let x = Math.floor(Math.random() * (canvas.width - 40) + 20);            
+              if (type == "sine") {
+                entity = new Ellipse(x, canvas.height - 18, 16, note, 0);            
+              } else if (type == "square") {
+                entity = new Square(x, canvas.height - 18, 16, note, 0);
+              } else if (type == "triangle") {
+                entity = new Triangle(x, canvas.height - 18, 16, note, 0);
+              } else if (type == "sawtooth") {
+                entity = new Saw(x, canvas.height - 18, 16, note, 0);
+              }
+            }
+          } 
+        });
+
+        document.addEventListener('keyup', function (e) {
+          // console.log('keyup', e.keyCode, keydown);
+          if (keycodes.indexOf(e.keyCode) == keydown) {
+            if (entity) {              
+              entity.velocity.y = -1 * keystrength;
+              entities.push(entity);
+              keystrength = 0;
+              keydown = -1;
+              entity = undefined;
+            }
+          }
         });
 
         let st = new Date();
@@ -348,30 +519,53 @@ BUGS:
           let dt = (nt - st) / 1000;
           st = nt;
 
+          if (keydown != -1) {
+            keystrength = clamp(keystrength + 1000 * dt, 0, 560);
+          }
           // if (entity != undefined) {
           //   entity.radius += 10 * dt;
           // }
 
-          for (let i = 0; i < entities.length; i++) {
-            for (let j = i + 1; j < entities.length; j++) {
-              if (entities[i].overlap(entities[j].x, entities[j].y, entities[j].radius)) {
-                entities[i].fadeOut = true;
-                entities[j].fadeOut = true;
-                // let theta = Math.atan2(entities[i].y - entities[j].y, entities[i].x - entities[j].x);
-                // let d = entities[i].radius + entities[j].radius;
-                // entities[i].angle = Math.PI + theta;
-                // entities[j].angle = theta;
-                // entities[i].x = entities[j].x + Math.cos(theta) * d;
-                // entities[i].y = entities[j].y + Math.sin(theta) * d;
-              }
-            }
-          }
+          // for (let i = 0; i < entities.length; i++) {
+          //   for (let j = i + 1; j < entities.length; j++) {
+          //     if (entities[i].overlap(entities[j].x, entities[j].y, entities[j].radius)) {
+          //       entities[i].fadeOut = true;
+          //       entities[j].fadeOut = true;
+          //       // let theta = Math.atan2(entities[i].y - entities[j].y, entities[i].x - entities[j].x);
+          //       // let d = entities[i].radius + entities[j].radius;
+          //       // entities[i].angle = Math.PI + theta;
+          //       // entities[j].angle = theta;
+          //       // entities[i].x = entities[j].x + Math.cos(theta) * d;
+          //       // entities[i].y = entities[j].y + Math.sin(theta) * d;
+          //     }
+          //   }
+          // }
           for (let i = 0; i < entities.length; i++) {
             entities[i].update(dt);
           }
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = "rgba(255,255,255,0.1)";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
           for (let i = 0; i < entities.length; i++) {
             entities[i].draw(ctx);
+          }
+          let h = keystrength / 2;
+          ctx.fillStyle = "black";
+          ctx.beginPath();
+          ctx.moveTo(canvas.width / 2, canvas.height);
+          ctx.lineTo(canvas.width / 2, canvas.height - h);
+          ctx.lineTo(canvas.width / 2 + 16, canvas.height - h);
+          ctx.lineTo(canvas.width / 2, canvas.height - h - 16);
+          ctx.lineTo(canvas.width / 2 - 16, canvas.height - h);
+          ctx.lineTo(canvas.width / 2, canvas.height - h);
+          ctx.closePath();
+          ctx.stroke();
+          ctx.fill();
+
+
+          for (let i = entities.length - 1; i >= 0; i--) {
+            if (entities[i].alive == false && entities[i].opacity <= 0) {
+              entities.splice(i, 1);
+            }
           }
 
           if (mouse.down) {
@@ -385,14 +579,41 @@ BUGS:
         step();
       };
     </script>
-    <style media="screen">
-      canvas {
-        height: 480px;
-        width: 640px
-      }
-    </style>
   </head>
   <body>
-    <canvas id="canvas" width="640" height="480"></canvas>
+    <main>
+      <canvas id="canvas" width="480" height="480"></canvas>
+      <div>
+        <label for="">Type: 
+          <select name="" id="type">
+            <option value="sine">Sine</option>
+            <option value="triangle">Triangle</option>
+            <option value="square">Square</option>
+            <option value="sawtooth">Saw</option>
+          </select>
+        </label>
+      </div>
+      <div class="button-group">
+        <a href="" data-key="0" id="0" class="key">0</a>
+        <a href="" data-key="1" id="1" class="key">1</a>
+        <a href="" data-key="2" id="2" class="key">2</a>
+        <a href="" data-key="3" id="3" class="key">3</a>
+        <a href="" data-key="4" id="4" class="key">4</a>
+        <a href="" data-key="5" id="5" class="key">5</a>
+        <a href="" data-key="6" id="6" class="key">6</a>
+        <a href="" data-key="7" id="7" class="key">7</a>
+      </div>
+      <select name="" id="scale">
+        <option value="[0,2,4,5,7,9,11,12]">ionian</option>
+        <option value="[0,2,3,5,7,9,10,12]">dorian</option>
+      </select>
+      <label for="">
+        Octave: 
+        <input type="number" value="4" min="0" max="7" step="1" id="octave">
+      </label>
+      <p>
+        <input type="range" value="2" min="0.2" max="5" step="0.1" id="sustain">
+      </p>
+    </main>
   </body>
 </html>
