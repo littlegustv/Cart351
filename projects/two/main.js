@@ -1,6 +1,6 @@
 window.onload = function () {
-  var steps = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  var notes = {
+  let steps = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  let notes = {
       'C0': 16.35,
       'C#0': 17.32,
       'Db0': 17.32,
@@ -153,22 +153,29 @@ window.onload = function () {
     // "#ffbf00",
     "#FF7F00",
     // "#ff3f00",
-    "#FF0000"
+    "#FF0000",
+    "deeppink"
   ];
 
   const THRESHOLD = 100;
-  // const GROWRATE = 40;
-
+  
   let canvas = document.getElementById('canvas');
   let ctx = canvas.getContext('2d');
 
   let audioctx = new AudioContext();
+  
+  // to avoid clipping with a lot of notes, I added a compressor?  It only goes so far though...
+
   let compressor = audioctx.createDynamicsCompressor();
   compressor.threshold.setValueAtTime(-50, audioctx.currentTime);
   compressor.knee.setValueAtTime(40, audioctx.currentTime);
 
+  // scalesteps are the indexes for each step in the scale, which is converted to strings to lookup the note frequencies
+
   let scalesteps = [0,3,7,12,15,19,24,27];
   let scale = ["C4", "D#4", "F4", "F#4", "G4", "A#4", "C5", "D#5"];
+
+  // global variables for setting note range
 
   let octave = 4;
   let sustain = 2;
@@ -206,6 +213,8 @@ window.onload = function () {
 
   let keys = document.getElementsByClassName("key");
 
+  // updates the scale array with currently selected info (also UI)
+
   function update_keys() {
     scale = scalesteps.map(function (n) {
       return steps[(n + tonic) % steps.length] + "" + (octave + Math.floor(n / steps.length));
@@ -216,6 +225,8 @@ window.onload = function () {
     }
   }
   update_keys();
+
+  // just some helper functions!
 
   function distance(x1, y1, x2, y2) {
     return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
@@ -232,6 +243,7 @@ window.onload = function () {
     let b = Math.floor(Math.random() * 256).toString(16).padStart(2, "0");
     return "#" + r + g + b;
   }
+
   class Ellipse {
     constructor (x, y, radius, key) {
       this.alive = true;
@@ -284,7 +296,6 @@ window.onload = function () {
       
       if ((this.y > (canvas.height - this.radius)) || (this.y < this.radius)) {
         this.y = Math.min(canvas.height - this.radius, Math.max(this.radius, this.y));
-        //this.angle = 2 * Math.PI - this.angle;
         this.velocity.y *= -1;
         this.play();
         if (Math.abs(this.velocity.y) < THRESHOLD) {
@@ -294,10 +305,6 @@ window.onload = function () {
       if ((this.x > canvas.width - this.radius) || (this.x < this.radius)) {
         this.x = clamp(this.x, this.radius, canvas.width - this.radius);
         this.velocity.x *= -1;
-        // this.play();              
-      }
-      if (this.grow) {
-        this.radius += dt * GROWRATE;
       }
       if (this.fadeOut) {
         if (keys[this.key].style.opacity > 0.5) {
@@ -322,6 +329,7 @@ window.onload = function () {
     }
   }
 
+  // so... all the other shapes also collide as if they were circles.... just easier that way!
   class Square extends Ellipse {
     constructor (x, y, radius, note, speed = 10) {
       super(x, y, radius, note, speed);
@@ -366,17 +374,16 @@ window.onload = function () {
 
   let entities = [];
 
-  let mouse = {start: {x: 0, y: 0}, end: {x: 0, y: 0}, down: false};
   let entity = undefined;
 
   let keydown = -1;
   let keystrength = 0;
   let keycodes = [65, 83, 68, 70, 71, 72, 74, 75];
+
   document.addEventListener('keydown', function (e) {
     if (keydown == -1) {
       keydown = keycodes.indexOf(e.keyCode);            
       if (keydown != -1) {
-        // note = scale[keydown];
         let x = Math.floor(canvas.width * (keydown + 0.5) / keycodes.length);
         if (type == "sine") {
           entity = new Ellipse(x, canvas.height - 18, 16, keydown, 0);            
@@ -392,7 +399,6 @@ window.onload = function () {
   });
 
   document.addEventListener('keyup', function (e) {
-    // console.log('keyup', e.keyCode, keydown);
     if (keycodes.indexOf(e.keyCode) == keydown) {
       if (entity) {              
         entity.velocity.y = -1 * keystrength;
@@ -418,7 +424,7 @@ window.onload = function () {
       entities[i].update(dt);
     }
 
-    // clear screen, but with 0.1 opacity to leave trail 
+    // clear screen (with BG image), but with 0.1 opacity to leave trail 
     
     ctx.globalAlpha = 0.1;
     for (let i = 0; i <= canvas.width; i += 68) {
@@ -427,11 +433,13 @@ window.onload = function () {
       }
     }
     ctx.globalAlpha = 1;
-    // ctx.fillStyle = "rgba(255,255,255,0.1)";
-    // ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
     for (let i = 0; i < entities.length; i++) {
       entities[i].draw(ctx);
     }
+
+    // drawing the indicator when you are pressing down a key:
+
     let h = keystrength / 2;
     ctx.fillStyle = colors[keydown % colors.length];
     ctx.strokeStyle = colors[keydown % colors.length];
@@ -445,8 +453,6 @@ window.onload = function () {
     ctx.lineTo(x, canvas.height - h);
     ctx.closePath();
     ctx.stroke();
-    // ctx.fill();
-
 
     for (let i = entities.length - 1; i >= 0; i--) {
       if (entities[i].alive == false && entities[i].opacity <= 0) {
@@ -454,17 +460,14 @@ window.onload = function () {
       }
     }
 
-    if (mouse.down) {
-      ctx.beginPath();
-      ctx.moveTo(mouse.start.x, mouse.start.y);
-      ctx.lineTo(mouse.end.x, mouse.end.y);
-      ctx.stroke();
-    }
     window.requestAnimationFrame(step);
   }
 
   let fabric = new Image();
   fabric.src = "./fabric_dark.png";
+
+  // wait for image to be loaded to start!
+
   fabric.onload = function () {
     step();          
   };
