@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <link rel="stylesheet" href="style.css">
+    <script type="text/javascript" src="main.js"></script>
+  </head>
+  <body>
+    <main>
+      <canvas id="canvas" width="480" height="480"></canvas>
+      <div class="button-group">
+        <a href="" data-key="0" id="0" class="key">0</a>
+        <a href="" data-key="1" id="1" class="key">1</a>
+        <a href="" data-key="2" id="2" class="key">2</a>
+        <a href="" data-key="3" id="3" class="key">3</a>
+        <a href="" data-key="4" id="4" class="key">4</a>
+        <a href="" data-key="5" id="5" class="key">5</a>
+        <a href="" data-key="6" id="6" class="key">6</a>
+        <a href="" data-key="7" id="7" class="key">7</a>
+      </div>
+      <div class="button-group">
+        <a href="">A</a>
+        <a href="">S</a>
+        <a href="">D</a>
+        <a href="">F</a>
+        <a href="">G</a>
+        <a href="">H</a>
+        <a href="">J</a>
+        <a href="">K</a>
+      </div>
+      <div>
+      </div>
+      <div class='rule'></div>
+      <div class="button-group">        
+        <select name="" id="tonic">
+          <option value="0">C</option>
+          <option value="1">C#</option>
+          <option value="2">D</option>
+          <option value="3">D#</option>
+          <option value="4">E</option>
+          <option value="5">F</option>
+          <option value="6">F#</option>
+          <option value="7">G</option>
+          <option value="8">G#</option>
+          <option value="9">A</option>
+          <option value="10">A#</option>
+          <option value="11">B</option>
+        </select>
+        <input type="number" value="4" min="0" max="7" step="1" id="octave">
+        <select name="" id="scale">
+          <option value="[0,3,7,12,15,19,24,27]" selected="selected">minor</option>
+          <option value="[0,4,7,12,16,19,24,28]">major</option>
+          <option value="[0,4,7,10,12,16,19,22]">dom 7th</option>
+          <option value="[0,4,7,11,12,16,19,23]">major maj7th</option>
+          <option value="[0,3,7,10,12,15,19,22]">minor 7th</option>
+          <option value="[0,3,6,12,15,18,24,27]">dim 5th</option>
+          <option value="[0,4,8,12,16,20,24,28]">aug 5th</option>
+          <option value="[0,5,7,12,17,19,24,29]">sus 4th</option>
+          <option value="[0,2,7,12,14,19,24,26]">sus 2nd</option>
+          <option value="[0,4,7,9,12,16,19,21]">6</option>
+          <option value="[0,4,7,12,14,16,19,24]">9</option>
+          <option value="[0,4,7,12,16,17,19,24]">11</option>
+          <option value="[0,4,7,12,16,19,21,24]">13</option>          
+          <option value="[0,2,4,5,7,9,11,12]">major scale (probably don't use!)</option>
+        </select>
+        <input type="submit" id="change" value="change">
+      </div>
+      <div class='rule'></div>
+      <div class='button-group'>
+        <select name="" id="type">
+          <option value="sine">Sine</option>
+          <option value="triangle">Triangle</option>
+          <option value="square">Square</option>
+          <option value="sawtooth">Saw</option>
+        </select>
+        <input type="range" value="2" min="0.2" max="5" step="0.1" id="sustain">
+      </div>
+      <div class="rule"></div>
+      <div class="button-group">
+        <input type="submit" id="reset" value="reset"></input>
+      </div>
+    </main>
+    <div class="links">
+      <h1>Links!</h1>
+      <ul class="list-unstyled">
+        <li>
+          <a target="_blank" href="Documentation.pdf">Documentation</a>
+        </li>
+        <li>            
+          <a target="_blank" href="Storyboard.pdf">Storyboard</a>
+        </li>
+        <li>          
+          <a target="_blank" href="https://github.com/littlegustv/Cart351/tree/master/projects/two">GITHUB</a>          
+        </li>
+      </ul>
+      <h2>Resources</h2>
+      <ul class="list-unstyled">
+        <li>
+          <a target="_blank" href="https://www.toptal.com/designers/subtlepatterns/dark-embroidery/">Background Image</a>
+        </li>
+        <li>          
+          <a target="_blank" href="http://marcgg.com/blog/2016/11/01/javascript-audio/">Note Frequency Array</a>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

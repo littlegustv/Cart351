@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <style media="screen">
+      div.thumbnail {
+        width: 64px;
+        height: 64px;
+        display: inline-block;
+      }
+      div.thumbnail:after {
+        content: attr(data-title);
+        display: block;
+        position: absolute;
+        color: white;
+        width: 64px;
+        font-size: 8px;
+        text-align: center;
+      }
+    </style>
+    <script
+      src="https://code.jquery.com/jquery-2.2.4.js"
+      integrity="sha256-iT6Q9iMJYuQiMWNd9lDyBUStIq/8PuOW33aOqmvFpqI="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript">
+
+      let min = {lat: 100, long: 100};
+      let max = {lat: -100, long: -100}
+      let aspect = 2;
+
+      let WIDTH = 1280 * 2;
+      let HEIGHT = WIDTH / aspect;
+
+      let shapes = [];
+
+      class Shape {
+        constructor (points) {
+          this.points = this.normalize(points);
+          this.color = random_color();
+        }
+        draw (ctx) {
+          ctx.fillStyle = this.color;
+          ctx.beginPath();
+          ctx.moveTo(this.points[0][0], this.points[0][1]);
+          for (let i = 1; i < this.points.length; i++) {
+            ctx.lineTo(this.points[i][0], this.points[i][1]);
+          }
+          ctx.closePath();
+          ctx.fill();
+          // ctx.stroke();
+        }
+        normalize (points) {
+          let normalized = [];
+          for (let i = 0; i < points.length; i++) {
+            let point = [];
+            point[0] = WIDTH * (points[i][0] - min.lat) / (max.lat - min.lat);
+            point[1] = HEIGHT - HEIGHT * (points[i][1] - min.long) / (max.long - min.long);
+            normalized.push(point);
+          }
+          return normalized;
+        }
+      }
+
+      class Line extends Shape {
+        draw (ctx) {
+          ctx.strokeStyle = "#004400";
+          ctx.beginPath();
+          ctx.moveTo(this.points[0][0], this.points[0][1]);
+          for (let i = 1; i < this.points.length; i++) {
+            ctx.lineTo(this.points[i][0], this.points[i][1]);
+          }
+          ctx.stroke();
+        }
+      }
+
+      function random_color () {
+        let r = Math.floor(Math.random() * 256).toString(16).padStart(2, "0");
+        let g = Math.floor(Math.random() * 256).toString(16).padStart(2, "0");
+        let b = Math.floor(Math.random() * 256).toString(16).padStart(2, "0");
+        return "#" + r + g + b;
+      }
+
+      function normalize_range (data) {
+        for (let i = 0; i < data.features.length; i++) {
+          for (let j = 0; j < data.features[i].geometry.coordinates[0].length; j++) {
+            if (data.features[i].geometry.coordinates[0][j][0] > max.lat) {
+              max.lat = data.features[i].geometry.coordinates[0][j][0];
+            }
+            if (data.features[i].geometry.coordinates[0][j][1] > max.long) {
+              max.long = data.features[i].geometry.coordinates[0][j][1];
+            }
+            if (data.features[i].geometry.coordinates[0][j][0] < min.lat) {
+              min.lat = data.features[i].geometry.coordinates[0][j][0];
+            }
+            if (data.features[i].geometry.coordinates[0][j][1] < min.long) {
+              min.long = data.features[i].geometry.coordinates[0][j][1];
+            }
+          }
+        }
+        aspect = Math.abs((max.lat - min.lat) / (max.long - min.long));
+        HEIGHT = WIDTH / aspect;
+      }
+
+      $(document).ready(function () {
+
+        // $('#search').submit(function (e) {
+        //   e.preventDefault();
+        //   let flickerAPI = "http://api.flickr.com/services/feeds/photos_public.gne?jsoncallback=?";
+        //   $.getJSON(flickerAPI, {tags: $('#term').val(), tagmode: "any", format: "json"}, function (data) {
+        //     console.log(data);
+        //     for (let i = 0; i < data.items.length; i++) {
+        //       let img = $('<div data-title="' + data.items[i].title + '" class="thumbnail" style="background: url(\'' + data.items[i].media.m + '\');" >');
+        //       $('#results').append(img);
+        //     }
+        //   });
+        // });
+
+        let apikey = "0bef928982350078b0"
+
+        $('#search').submit(function (e) {
+          e.preventDefault();
+
+          if (navigator.geolocation) {
+              navigator.geolocation.getCurrentPosition(function (position) {
+                console.log(position);
+              });
+          }
+
+          $.getJSON('https://api.openweathermap.org/data/2.5/weather?q=' + $('#term').val() + '&APPID=' + apikey, function (data) {
+            console.log(data);
+          });
+        });
+
+        // $.getJSON('http://donnees.ville.montreal.qc.ca/dataset/29791562-f050-401e-b405-5c1fbf427f65/resource/c21c28e6-d9a2-41f1-aebf-c5e00ef3de32/download/bois.geojson', function (data) {
+        //
+        //   normalize_range(data);
+        //
+        //   for (let i = 0; i < data.features.length; i++) {
+        //     shapes.push(new Shape(data.features[i].geometry.coordinates[0]));
+        //   }
+        //
+        //   let canvas = document.createElement('canvas');
+        //   canvas.width = WIDTH;
+        //   canvas.height = HEIGHT;
+        //   document.body.appendChild(canvas);
+        //   let ctx = canvas.getContext('2d');
+        //
+        //   $.getJSON('http://donnees.ville.montreal.qc.ca/dataset/5ea29f40-1b5b-4f34-85b3-7c67088ff536/resource/0dc6612a-be66-406b-b2d9-59c9e1c65ebf/download/reseau_cyclable_2018_c.geojson', function (data) {
+        //     for (let i = 0; i < data.features.length; i++) {
+        //       shapes.push(new Line(data.features[i].geometry.coordinates[0]));
+        //     }
+        //
+        //     for (let i = 0; i < shapes.length; i++) {
+        //       shapes[i].draw(ctx);
+        //     }
+        //     console.log('done drawing');
+        //   });
+        // });
+      });
+    </script>
+    <title></title>
+  </head>
+  <body>
+    <form id='search'>
+      <input type='text' id='term' value="spider plant">
+      <input type='submit' value='Search'>
+    </form>
+    <div id="results">
+    </div>
+  </body>
+</html>
