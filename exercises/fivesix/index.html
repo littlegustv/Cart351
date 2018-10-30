@@ -1,0 +1,64 @@
+<html>
+	<head>
+		<link rel="stylesheet" href="style.css">
+		<script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+  		<script src="main.js"></script>
+  		<title>Spider Plants</title>
+	</head>
+	<body>
+		<header>
+			<h1>Spider Plants</h1>
+		</header>
+		<main>
+			<article id="content">
+				<section id="form">
+					<form action="" id="filter">
+						<label for="">
+							Wtr: 
+							<select name="" id="water-compare">
+								<option value="greater">Greater Than</option>
+								<option value="less">Less Than</option>
+								<option value="equal">Equal To</option>
+							</select>
+							<input id="water" type="number" min=0 max=2000 value=0> ml.
+						</label>
+						<label for="">
+							Sun:
+							<select name="" id="sunlight-compare">
+								<option value="greater">Greater Than</option>
+								<option value="less">Less Than</option>
+								<option value="equal">Equal To</option>
+							</select>
+							<input id="sunlight" type="number" min=0 max=24 value=0> hours.
+						</label>
+						<label for="">
+							Tmp:
+							<select name="" id="temperature-compare">
+								<option value="greater">Greater Than</option>
+								<option value="less">Less Than</option>
+								<option value="equal">Equal To</option>
+							</select>
+							<input id="temperature" type="number" min=0 max=40 value=0> C
+						</label>
+						<label for="">
+							Grw:
+							<select name="" id="growth-compare">
+								<option value="greater">Greater Than</option>
+								<option value="less">Less Than</option>
+								<option value="equal">Equal To</option>
+							</select>
+							<input id="growth" type="number" min=0 max=100 value=0> cm.
+						</label>						
+						<label for="">
+							Rdy?
+							<input type="submit" value="Filter!">
+						</label>
+					</form>
+				</section>
+				<section id="results">
+					
+				</section>
+			</article>
+		</main>
+	</body>
+</html>

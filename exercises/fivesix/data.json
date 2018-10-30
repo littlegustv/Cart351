@@ -1,0 +1,26 @@
+[
+	{
+		"water": 100,
+		"sunlight": 8,
+		"temperature": 17,
+		"growth": 3
+	},
+	{
+		"water": 0,
+		"sunlight": 0,
+		"temperature": 4,
+		"growth": 92
+	},
+	{
+		"water": 250,
+		"sunlight": 9,
+		"temperature": 27,
+		"growth": 6
+	},
+	{
+		"water": 1876,
+		"sunlight": 13,
+		"temperature": 17,
+		"growth": 8
+	}
+]

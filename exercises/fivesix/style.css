@@ -1,0 +1,72 @@
+* {
+	margin: 0;
+	padding: 0;
+	font-family: Ubuntu, Roboto, sans-serif;
+}
+html, body {
+	height: 100%;
+	width: 100%;
+}
+header {
+	width: 40%;
+	position: absolute;
+	color: #8BC34A;
+	z-index: 100;
+	opacity: 0.5;
+	text-align: left;
+	font-size: 4em;
+}
+article {
+	height: 100%;
+	width: 100%;
+	background-image: url(https://upload.wikimedia.org/wikipedia/commons/b/b1/Hierbabuena_0611_Revised.jpg);
+	background-position: center top;
+	background-attachment: fixed;
+	background-size: 100% auto;
+}
+section {
+	float: right;
+	margin: 20px;
+	width: 25%;
+	background: white;
+}
+section#form {
+	font-family: monospace;
+    border-bottom: 10px solid black;
+}
+label {
+	font-family: monospace;
+	width: 100%;
+	display: block;
+	margin: 10px;
+	font-weight: bold;
+}
+section#form input, section#form select {
+	width: 33%;
+	border: 1px solid black;
+}
+div.result {
+	margin: 10px;
+	padding: 10px;
+	border: 1px solid black;
+    border-bottom: 10px solid black;
+}
+div.result strong {
+	width: 50%;
+	display: inline-block;
+	text-align: right;
+	padding-right: 10px;
+}
+div.result h4  {
+	letter-spacing: 3px;
+	text-align: center;
+}
+div.result.disabled {
+	color: #999;
+	background: #ddd;
+}
+p.outofrange {
+	color: #CC0000 !important;
+	font-weight: bold;
+	text-decoration: line-through;
+}
