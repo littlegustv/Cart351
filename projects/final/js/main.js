@@ -360,7 +360,7 @@ class Bird extends Walker {
         theta = angle(this.x, this.y, this.startx, this.starty) + (Math.random() - 0.5) * Math.PI;
       }
       this.angle = this.angle + short_angle(this.angle, theta) / 8;
-      //console.log('angle set!', theta, count, this.angle);	  
+      //console.log('angle set!', theta, count, this.angle);
 
       if (this.footprints.length > 50) {
       	this.footprints.shift();
@@ -427,7 +427,7 @@ class Snowman extends Sprite {
     }
     ctx.arc(this.x, this.y + offset, this.radius / 2, 0,Math.PI , true);
     //ctx.moveTo(this.x - this.radius / 2, this.y - this.radius / 2);
-    if (this.endx < this.x) {    	
+    if (this.endx < this.x) {
 	    ctx.quadraticCurveTo((this.x + this.endx) / 2, this.y + 48, this.endx, this.endy);
 	    ctx.quadraticCurveTo((this.x + this.endx) / 2, this.y + 48 + this.radius, this.x + this.radius / 2, this.y + offset);
     } else {
@@ -466,12 +466,20 @@ $(document).ready(function () {
   canvas.style.msInterpolationMode = "nearest-neighbor";
 
   let loaded = 0;
+
+  let start = function () {
+    canvas.removeEventListener('click', start);
+    load();
+  };
+
   let resourceloaded = function (arg) {
     loaded += 1;
     if (loaded > (resources.length - 1)) {
-      load();
+      ctx.fillText('click anywhere to start', 16, canvas.height / 2);
+      canvas.addEventListener('click', start);
     }
   }
+
   for (let i = 0; i < resources.length; i++) {
     if (resources[i].indexOf('png') != -1) {
       let image = new Image();
@@ -576,7 +584,7 @@ $(document).ready(function () {
 
     for (let i = 0; i < 10; i++) {
 	    let bird = new Bird(random(-1000, 1000), random(-1000, 1000), assets['birdprint'], assets['bird'], global_footprints);
-	    entities.push(bird);    	
+	    entities.push(bird);
     }
 
     // reigndeer herd
@@ -585,7 +593,7 @@ $(document).ready(function () {
     for (let i = 0; i < 10; i++) {
 	    let reigndeer = new Reigndeer(rx + random(32, 64) * i, ry + random(12,48) * i, assets['reigndeer-footprint'], assets['reigndeer'], global_footprints, 32);
 	    reigndeer.time = Math.random() * Math.PI;
-	    entities.push(reigndeer);    	
+	    entities.push(reigndeer);
     }
 
     $.get('save.php').done(function (result) {
@@ -605,9 +613,9 @@ $(document).ready(function () {
 
         f.deep = deep;
         if (deep) {
-          f.opacity = Math.max(10 - sessions.indexOf(data[i].session_time), 1) / 15;
+          f.opacity = Math.max(15 - sessions.indexOf(data[i].session_time), 1) / 15;
         } else {
-          f.opacity = Math.max(10 - sessions.indexOf(data[i].session_time), 1) / 24;
+          f.opacity = Math.max(20 - sessions.indexOf(data[i].session_time), 1) / 24;
         }
         entities.push(f);
         global_footprints.push(f);
@@ -657,10 +665,10 @@ $(document).ready(function () {
     }
 
     let forests = [{x: -1200, y: -1200}, {x: 64, y: -608}, {x: 64, y: 64}];
-    for (let j = 0; j < forests.length; j++) {    	
+    for (let j = 0; j < forests.length; j++) {
 	    for (let i = 0; i < 32; i++) {
 	    	for (let k = 0; k < 32; k++) {
-	    	  if (Math.random() < 0.1) {	    	  	
+	    	  if (Math.random() < 0.1) {
 			      let test = new Circle(forests[j].x + 16 * i, forests[j].y + 16 * k, 64);
 			      let count = 0;
 			      for (let j = 0; j < global_footprints.length; j++) {
@@ -691,7 +699,7 @@ $(document).ready(function () {
 			          items.push(e);
 			        }
 			      }
-	    	  }	    		
+	    	  }
 	    	}
 	    }
     }
@@ -699,7 +707,7 @@ $(document).ready(function () {
     // decorated trees
     for (let i = 0; i < 16; i++) {
     	for (let j = 0; j < 16; j++) {
-			if (Math.random() < 0.1) {				
+			if (Math.random() < 0.1) {
 		      let test = new Circle(-608 + i * 32, -608 + j * 32, 64);
 		      let count = 0;
 		      for (let j = 0; j < global_footprints.length; j++) {
@@ -725,7 +733,7 @@ $(document).ready(function () {
 		          items.push(e);
 		        }
 		      }
-			}    		
+			}
     	}
     }
 
@@ -794,6 +802,10 @@ $(document).ready(function () {
             ui['end1'] = new Text(12, 160, 'Y Y OOO U U   DDD I DDD   I TTT !!!');
             ui['end2'] = new Text(12, 166, ' Y  O O U U   D D I D D   I  T  !!!');
             ui['end3'] = new Text(12, 172, ' Y  OOO UUU   DDD I DDD   I  T  !!!');
+            ui['end4'] = new Text(12, 200, 'click to see the world as you left it');
+            canvas.addEventListener('click', function () {
+              window.location.reload()
+            });
           }
         }
         let index = entities.indexOf(items[i]);

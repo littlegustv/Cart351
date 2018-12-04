@@ -18,10 +18,19 @@
       #images {
         display: none;
       }
+      main {
+        max-width: 640px;
+        margin: auto;
+        text-align: left;
+      }
     </style>
   </head>
   <body>
     <canvas height="320" width="320" id="canvas"></canvas>
+    <main>
+      <h4>instructions</h4>
+      <p>use LEFT and RIGHT arrow keys to turn.  collect all the items on your list, but be careful about the impact you have</p>
+    </main>
     <section id="images">
       <img src="images/bird.png" alt="">
       <img src="images/birdprint.png" alt="">
