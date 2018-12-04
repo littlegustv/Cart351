@@ -1,33 +1,41 @@
 /*
 
-POLISH:
- - FEATURES
-  - select footprint color, save to session
- - LAYOUT
-  - paths
-  - interior 'decorative' walls
-  - exterior walls & woods
-  - 'wooded' zones
-  - standalone christmas trees
-  - bird zones
-  - deer herds
-  - snowman building zones
- - VISUALS
-  - snowman 'arcs'
-  - little decorations
-  x- falling snow effect (wrap on UI layer)
-  x- better random positioning for collectibles (esp. pinecones)
-  - better end display! -> LINK TO "YOUR EFFECT ON THE WORLD"
-    - links back to same page, but without scavenger hunt?
- - AUDIO
-  - positional audio
-    - sleigh bell
-    - bird chirping
-  - global audio
-    - footsteps
-    - music?
+Attribution:
+
+'jingle.wav': https://freesound.org/people/Robinhood76/sounds/63272/
+'chirp.wav': https://freesound.org/people/Mattix/sounds/441312/
+
 
 */
+
+
+let resources = [
+  'step.wav',
+  'collect.wav',
+  'jingle.wav',
+  'chirp.wav',
+  'frame.png',
+  'feather.png',
+  'footprint.png',
+  'bird.png',
+  'birdprint.png',
+  'reigndeer.png',
+  'reigndeer-footprint.png',
+  'snowman.png',
+  'snowmansmall.png',
+  'gingerbread.png',
+  'gift.png',
+  'pinecone.png',
+  'bell.png',
+  'ornament.png',
+  'wall.png',
+  'tree.png',
+  'decoratedtree.png',
+  'tree-dead.png',
+  'cobblestone.png',
+  'snowflake.png',
+];
+
 
 let scavenger = ['pinecone', 'feather', 'bell', 'gingerbread', 'gift'];
 
@@ -38,6 +46,8 @@ let items = [];
 
 let ui = {};
 let points = 0;
+
+let player;
 
 let assets = {};
 
@@ -247,6 +257,7 @@ class Walker extends Mobile {
 
 class Player extends Walker {
   save (footprint) {
+  	assets['step'].play();
     $.post('save.php', { data: footprint.data() }, function (result) {
       //console.log(result);
     });
@@ -323,6 +334,8 @@ class Bird extends Walker {
     this.global_footprints = global_footprints;
     this.detection_radius = 80;
     this.object = assets['feather'];
+    this.sound = assets['chirp'];
+    this.chance = 5;
   }
   update (dt) {
     if (this.distance <= this.speed * dt) {
@@ -335,7 +348,7 @@ class Bird extends Walker {
         }
       }
       // feather
-      if (Math.random() * 100 < 5) {
+      if (Math.random() * 1000 < this.chance) {
         let e = new Sprite(this.x, this.y, this.object, 16);
         entities.push(e);
         items.push(e);
@@ -344,11 +357,19 @@ class Bird extends Walker {
       if (count > 0) {
         theta = Math.PI + theta / count;
       } else { // return home otherwise
-        theta = angle(this.x, this.y, this.startx, this.starty);
+        theta = angle(this.x, this.y, this.startx, this.starty) + (Math.random() - 0.5) * Math.PI;
       }
       this.angle = this.angle + short_angle(this.angle, theta) / 8;
-      //console.log('angle set!', theta, count, this.angle);
+      //console.log('angle set!', theta, count, this.angle);	  
+
+      if (this.footprints.length > 50) {
+      	this.footprints.shift();
+      }
     }
+    if (Math.random() * 1000 < 4) {
+		this.sound.volume = Math.max(0, 640 - distance(this.x, this.y, player.x, player.y)) / 640;
+		this.sound.play();
+	}
     super.update(dt);
   }
   draw (ctx) {
@@ -367,7 +388,9 @@ class Reigndeer extends Bird {
     this.interval = 16;
     this.speed = 48;
     this.object = assets['bell'];
+    this.sound = assets['jingle'];
     this.time = 0;
+    this.chance = 5;
   }
   update (dt) {
     super.update(dt);
@@ -389,28 +412,32 @@ class Reigndeer extends Bird {
   }
 }
 
-// gift
 class Snowman extends Sprite {
   constructor (x, y, sprite, radius) {
     super(x, y, sprite, radius);
     this.color = "rgba(0,0,0,0.1)";
-    this.endx = this.x + (2 * random(0, 2) - 1) * 128;
+    this.endx = this.x + (2 * random(0, 2) - 1) * (5 * this.radius);
     this.endy = this.y;
   }
   draw (ctx) {
     ctx.beginPath();
-    ctx.moveTo(this.x - this.radius / 2, this.y - this.radius / 2);
-    ctx.quadraticCurveTo(this.x, this.y + 48, this.endx, this.endy);
-    ctx.quadraticCurveTo(this.x, this.y + 48, this.x - this.radius, this.y + this.radius);
-    ctx.arc(this.x - this.radius / 2, this.y + this.radius / 2, this.radius / 2, 0, 2 * Math.PI , true);
+    let offset = 0;
+    if (this.radius >= 16) {
+    	offset = 16;
+    }
+    ctx.arc(this.x, this.y + offset, this.radius / 2, 0,Math.PI , true);
+    //ctx.moveTo(this.x - this.radius / 2, this.y - this.radius / 2);
+    if (this.endx < this.x) {    	
+	    ctx.quadraticCurveTo((this.x + this.endx) / 2, this.y + 48, this.endx, this.endy);
+	    ctx.quadraticCurveTo((this.x + this.endx) / 2, this.y + 48 + this.radius, this.x + this.radius / 2, this.y + offset);
+    } else {
+    	ctx.quadraticCurveTo((this.x + this.endx) / 2, this.y + 48 + this.radius, this.endx, this.endy);
+	    ctx.quadraticCurveTo((this.x + this.endx) / 2, this.y + 48, this.x + this.radius / 2, this.y + offset);
+    }
     ctx.closePath();
     ctx.fillStyle = this.color;
     ctx.fill();
     super.draw(ctx);
-    // ctx.fillStyle = "red";
-    // ctx.fillRect(this.x - this.radius, this.y - this.radius, 4, 4);
-    // ctx.fillStyle = "blue";
-    // ctx.fillRect(this.x, this.y, 4, 4);
   }
 }
 
@@ -419,30 +446,6 @@ class Camera extends Mobile {
     ctx.translate(-Math.round(this.x), -Math.round(this.y));
   }
 }
-
-let resources = [
-  'snow.wav',
-  'frame.png',
-  'feather.png',
-  'footprint.png',
-  'bird.png',
-  'birdprint.png',
-  'reigndeer.png',
-  'reigndeer-footprint.png',
-  'snowman.png',
-  'snowmansmall.png',
-  'gingerbread.png',
-  'gift.png',
-  'pinecone.png',
-  'bell.png',
-  'ornament.png',
-  'wall.png',
-  'tree.png',
-  'decoratedtree.png',
-  'tree-dead.png',
-  'cobblestone.png',
-  'snowflake.png',
-];
 
 $(document).ready(function () {
   let canvas = document.getElementById('canvas');
@@ -492,48 +495,98 @@ $(document).ready(function () {
 
   let st;
   let camera;
-  let player;
 
   let started = false;
 
   let load = function () {
 
     // paths
-    let northsouth = new TiledBackground(320, 320, 128, 2560, assets["cobblestone"]);
+    let northsouth = new TiledBackground(0, 0, 80, 2560, assets["cobblestone"]);
     entities.push(northsouth);
     paths.push(northsouth);
 
-    let eastwest = new TiledBackground(320, 320, 2560, 128, assets["cobblestone"]);
+    let eastwest = new TiledBackground(0, 0, 2560, 80, assets["cobblestone"]);
     entities.push(eastwest);
     paths.push(eastwest);
 
+    // circular
+    let east = new TiledBackground(-1280, 0, 80, 2624, assets['cobblestone']);
+    entities.push(east);
+    paths.push(east);
 
-    let rock = new Circle(320, 320, 32);
-    entities.push(rock);
-    solids.push(rock);
+    let west = new TiledBackground(1280, 0, 80, 2624, assets['cobblestone']);
+    entities.push(west);
+    paths.push(west);
 
-    let wall1 = new TiledBackground(320, 120, 256, 64, assets['wall']);
+    let north = new TiledBackground(0, -1280, 2624, 80, assets['cobblestone']);
+    entities.push(north);
+    paths.push(north);
+
+    let south = new TiledBackground(0, 1280, 2624, 80, assets['cobblestone']);
+    entities.push(south);
+    paths.push(south);
+
+    // intermediary
+    let m1 = new TiledBackground(640, 0, 32, 2560, assets['cobblestone']);
+    entities.push(m1);
+    paths.push(m1);
+
+    let m2 = new TiledBackground(-640, 0, 32, 2560, assets['cobblestone']);
+    entities.push(m2);
+    paths.push(m2);
+
+    let m3 = new TiledBackground(0, 640, 2560, 32, assets['cobblestone']);
+    entities.push(m3);
+    paths.push(m3);
+
+    let m4 = new TiledBackground(0, -640, 2560, 32, assets['cobblestone']);
+    entities.push(m4);
+    paths.push(m4);
+
+
+    // outer walls
+    let wall1 = new TiledBackground(-1312, 0, 16, 2624, assets['wall']);
     solids.push(wall1);
     entities.push(wall1);
 
-    let wall2 = new TiledBackground(120, 320, 64, 200, assets['wall']);
+    let wall2 = new TiledBackground(1312, 0, 16, 2624, assets['wall']);
     solids.push(wall2);
     entities.push(wall2);
 
-    let bird = new Bird(440, 440, assets['birdprint'], assets['bird'], global_footprints);
-    entities.push(bird);
+    let wall3 = new TiledBackground(0, 1312, 2624, 16, assets['wall']);
+    solids.push(wall3);
+    entities.push(wall3);
 
-    let b2 = new Bird(640, 200, assets['birdprint'], assets['bird'], global_footprints);
-    entities.push(b2);
+    let wall4 = new TiledBackground(0, -1312, 2624, 16, assets['wall']);
+    solids.push(wall4);
+    entities.push(wall4);
 
-    let reigndeer = new Reigndeer(440, 220, assets['reigndeer-footprint'], assets['reigndeer'], global_footprints, 32);
-    entities.push(reigndeer);
+    // outer trees
+    for (let i = 0; i < 400; i++) {
+    	let t = new Sprite(1344 + random(0, 64), -1400 + 7 * i, assets['tree'], 16);
+    	entities.push(t);
+    }
 
-    let ornament = new Sprite(400, 360, assets['ornament'], 8);
-    entities.push(ornament);
+    for (let i = 0; i < 400; i++) {
+    	let t = new Sprite(-1344 - random(0, 64), -1400 + 7 * i, assets['tree'], 16);
+    	entities.push(t);
+    }
 
-    let gift = new Sprite(400, 280, assets['gift'], 8);
-    entities.push(gift);
+    // birds
+
+    for (let i = 0; i < 10; i++) {
+	    let bird = new Bird(random(-1000, 1000), random(-1000, 1000), assets['birdprint'], assets['bird'], global_footprints);
+	    entities.push(bird);    	
+    }
+
+    // reigndeer herd
+    let rx = random(-1000, 1000);
+    let ry = random(-1000, 1000);
+    for (let i = 0; i < 10; i++) {
+	    let reigndeer = new Reigndeer(rx + random(32, 64) * i, ry + random(12,48) * i, assets['reigndeer-footprint'], assets['reigndeer'], global_footprints, 32);
+	    reigndeer.time = Math.random() * Math.PI;
+	    entities.push(reigndeer);    	
+    }
 
     $.get('save.php').done(function (result) {
       console.log('got a result');
@@ -571,7 +624,7 @@ $(document).ready(function () {
     started = true;
 
     // ... create named objects
-    player = new Player(440 + Math.random() * 40 - 20, 320 + Math.random() * 40 - 20, assets['footprint']);
+    player = new Player(0, 0, assets['footprint']);
     player.velocity = {x: 0, y: 0};
     player.speed = 48;
     entities.push(player);
@@ -579,7 +632,7 @@ $(document).ready(function () {
 
     // snowmen
     for (let i = 0; i < 15; i++) {
-      let test = new Circle(800 + random(-160,160), 800 + random(-160,160), 64);
+      let test = new Circle(960 + random(-320,320), 320 + random(-160,160), 64);
       let count = 0;
       for (let j = 0; j < global_footprints.length; j++) {
         if (test.overlap(global_footprints[j].x, global_footprints[j].y) && global_footprints[j].deep) {
@@ -603,73 +656,84 @@ $(document).ready(function () {
       }
     }
 
-    for (let i = 0; i < 20; i++) {
-      let test = new Circle(320 - i * 64, 224, 64);
-      let count = 0;
-      for (let j = 0; j < global_footprints.length; j++) {
-        if (test.overlap(global_footprints[j].x, global_footprints[j].y) && global_footprints[j].deep) {
-          count += 1;
-        }
-      }
-      if (count > 10) {
-        let tree = new Tree(320 - i * 64, 224, 16, assets['tree-dead']);
-        entities.push(tree);
-        let c = new Circle(320 - i * 64, 240, 16);
-        solids.push(c);
-        // fix me create ornament pieces
-      } else {
-        let tree = new Tree(320 - i * 64, 224, 16, assets['tree']);
-        entities.push(tree);
-        let c = new Circle(320 - i * 64, 240, 16);
-        solids.push(c);
-        // on-tree ornaments
-        for (let j = 0; j < 2; j++) {
-          let e = new Sprite(tree.x + random(-12, 12), tree.y + random(0, 24), assets['pinecone'], 8);
-          entities.push(e);
-          items.push(e);
-        }
-        // 'loose' ornaments
-        if (Math.random() < 0.6) {
-          let e = new Sprite(tree.x + random(-80, 80), tree.y + random(0, 64), assets['pinecone'], 8);
-          entities.push(e);
-          items.push(e);
-        }
-      }
+    let forests = [{x: -1200, y: -1200}, {x: 64, y: -608}, {x: 64, y: 64}];
+    for (let j = 0; j < forests.length; j++) {    	
+	    for (let i = 0; i < 32; i++) {
+	    	for (let k = 0; k < 32; k++) {
+	    	  if (Math.random() < 0.1) {	    	  	
+			      let test = new Circle(forests[j].x + 16 * i, forests[j].y + 16 * k, 64);
+			      let count = 0;
+			      for (let j = 0; j < global_footprints.length; j++) {
+			        if (test.overlap(global_footprints[j].x, global_footprints[j].y) && global_footprints[j].deep) {
+			          count += 1;
+			        }
+			      }
+			      if (count > 10) {
+			        let tree = new Tree(test.x, test.y, 16, assets['tree-dead']);
+			        entities.push(tree);
+			        let c = new Circle(test.x, test.y + 16, 16);
+			        solids.push(c);
+			      } else {
+			        let tree = new Tree(test.x, test.y, 16, assets['tree']);
+			        entities.push(tree);
+			        let c = new Circle(test.x, test.y + 16, 16);
+			        solids.push(c);
+			        // on-tree pine-cones
+			        for (let j = 0; j < 2; j++) {
+			          let e = new Sprite(tree.x + random(-12, 12), tree.y + random(0, 24), assets['pinecone'], 8);
+			          entities.push(e);
+			          items.push(e);
+			        }
+			        // 'loose' pine-cones
+			        if (Math.random() < 0.6) {
+			          let e = new Sprite(tree.x + random(-80, 80), tree.y + random(0, 64), assets['pinecone'], 8);
+			          entities.push(e);
+			          items.push(e);
+			        }
+			      }
+	    	  }	    		
+	    	}
+	    }
     }
 
     // decorated trees
-    for (let i = 0; i < 20; i++) {
-      let test = new Circle(320 - i * 64, 224, 64);
-      let count = 0;
-      for (let j = 0; j < global_footprints.length; j++) {
-        if (test.overlap(global_footprints[j].x, global_footprints[j].y) && global_footprints[j].deep) {
-          count += 1;
-        }
-      }
-      if (count > 10) {
-        let tree = new Tree(320 - i * 64, 384, 16, assets['tree-dead']);
-        entities.push(tree);
-        let c = new Circle(320 - i * 64, 400, 16);
-        solids.push(c);
-        // fix me create ornament pieces
-      } else {
-        let tree = new Tree(320 - i * 64, 384, 16, assets['decoratedtree']);
-        entities.push(tree);
-        let c = new Circle(320 - i * 64, 400, 16);
-        solids.push(c);
+    for (let i = 0; i < 16; i++) {
+    	for (let j = 0; j < 16; j++) {
+			if (Math.random() < 0.1) {				
+		      let test = new Circle(-608 + i * 32, -608 + j * 32, 64);
+		      let count = 0;
+		      for (let j = 0; j < global_footprints.length; j++) {
+		        if (test.overlap(global_footprints[j].x, global_footprints[j].y) && global_footprints[j].deep) {
+		          count += 1;
+		        }
+		      }
+		      if (count > 10) {
+		        let tree = new Tree(test.x, test.y, 16, assets['tree-dead']);
+		        entities.push(tree);
+		        let c = new Circle(test.x, test.y + 16, 16);
+		        solids.push(c);
+		        // fix me create ornament pieces
+		      } else {
+		        let tree = new Tree(test.x, test.y, 16, assets['decoratedtree']);
+		        entities.push(tree);
+		        let c = new Circle(test.x, test.y + 16, 16);
+		        solids.push(c);
 
-        if (Math.random() < 0.6) {
-          let e = new Sprite(tree.x + random(-80, 80), tree.y + random(-64, 64), assets['gift'], 8);
-          entities.push(e);
-          items.push(e);
-        }
-      }
+		        if (Math.random() < 0.6) {
+		          let e = new Sprite(tree.x + random(-80, 80), tree.y + random(-64, 64), assets['gift'], 8);
+		          entities.push(e);
+		          items.push(e);
+		        }
+		      }
+			}    		
+    	}
     }
 
+    ui['instructions'] = new Text(12, 10, "Scavenger Hunt!");
     for (let i = 0; i < scavenger.length; i++) {
-      let text = new Text(32, 14 + i * 18, scavenger[i]);
+      let text = new Text(32, 26 + i * 17, scavenger[i]);
       ui[scavenger[i] + "-text"] = text;
-      let icon = new Sprite(16, 16 + i * 16, assets[scavenger[i]], 8);
+      let icon = new Sprite(16, 26 + i * 16, assets[scavenger[i]], 8);
       ui[scavenger[i] + "-icon"] = icon;
     }
 
@@ -721,13 +785,15 @@ $(document).ready(function () {
     for (let i = items.length - 1; i >= 0; i--) {
       if (items[i].overlap(player.x, player.y)) {
         let completed = items[i].image.getAttribute('data-name');
+	    assets['collect'].play();
         if (ui[completed + "-text"].text.indexOf("DONE") === -1) {
           ui[completed + "-text"].text = "[DONE] " + ui[completed + "-text"].text;
           points += 1;
           if (points >= 5) {
             // fix me: END STATE
-            let end = new Text(64, 160, 'You did it!!!');
-            ui['end'] = end;
+            ui['end1'] = new Text(12, 160, 'Y Y OOO U U   DDD I DDD   I TTT !!!');
+            ui['end2'] = new Text(12, 166, ' Y  O O U U   D D I D D   I  T  !!!');
+            ui['end3'] = new Text(12, 172, ' Y  OOO UUU   DDD I DDD   I  T  !!!');
           }
         }
         let index = entities.indexOf(items[i]);
