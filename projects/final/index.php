@@ -1,23 +1,3 @@
-<!--
-
-brainstorming:
-
-goal?
- - find key? (get out!)
- - find items? (scavenger hunt)
- -
-
-events:
- - bird (shy)
- - tree (needs space)
- - ice (breaks on repeated use)
- - gifts (only one can have it!)
- - christmas ornaments (can be stepped on ?)
- - christmas lights
- - snowman
- - music/performance (depends on audience?)
-
--->
 <?php
   session_start();
   session_destroy();
@@ -35,9 +15,24 @@ events:
         height: 640px;
         margin: auto;
       }
+      #images {
+        display: none;
+      }
     </style>
   </head>
   <body>
-    <canvas height="640" width="640" id="canvas"></canvas>
+    <canvas height="320" width="320" id="canvas"></canvas>
+    <section id="images">
+      <img src="images/bird.png" alt="">
+      <img src="images/birdprint.png" alt="">
+      <img src="images/footprint.png" alt="">
+      <img src="images/reigndeer.png" alt="">
+      <img src="images/gingerbread.png" alt="">
+      <img src="images/ornament.png" alt="">
+      <img src="images/snowman.png" alt="">
+      <img src="images/gift.png" alt="">
+      <img src="images/wall.png" alt="">
+      <img src="images/cobblestone.png" alt="">
+    </section>
   </body>
 </html>

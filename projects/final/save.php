@@ -37,7 +37,22 @@ try
        die($db->lastErrorMsg());
      }
    } else {
-     $query = 'SELECT * from footprints ORDER BY session_time, id';
+     $query = 'SELECT distinct session_time from footprints order by session_time desc limit 50';
+     $result = $db->query($query);
+     $rows = array();
+     while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+       $rows[] = $row;
+     }
+     $end = end($rows);
+     // var_dump($end);
+     // die();
+     if ($end) {
+       $query = 'SELECT * from footprints WHERE session_time > ' . $end['session_time'] . ' ORDER BY session_time, id';
+     } else {
+       $query = 'SELECT * from footprints ORDER BY session_time, id';       
+     }
+     // echo($query);
+     // die();
      $result = $db->query($query);
      $data = array();
      while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
