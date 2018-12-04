@@ -14,9 +14,11 @@ POLISH:
   - snowman building zones
  - VISUALS
   - snowman 'arcs'
+  - little decorations
   x- falling snow effect (wrap on UI layer)
   x- better random positioning for collectibles (esp. pinecones)
   - better end display! -> LINK TO "YOUR EFFECT ON THE WORLD"
+    - links back to same page, but without scavenger hunt?
  - AUDIO
   - positional audio
     - sleigh bell
