@@ -597,7 +597,7 @@ $(document).ready(function () {
     }
 
     $.get('save.php').done(function (result) {
-      console.log('got a result');
+      // console.log('got a result');
       let data = JSON.parse(result);
       let sessions = Array.from(new Set(data.map((d) => d.session_time).sort().reverse()));
 
@@ -620,7 +620,7 @@ $(document).ready(function () {
         entities.push(f);
         global_footprints.push(f);
       }
-      console.log(data);
+      // console.log(data);
       setup();
     });
   };
@@ -636,7 +636,7 @@ $(document).ready(function () {
     player.velocity = {x: 0, y: 0};
     player.speed = 48;
     entities.push(player);
-    console.log('adding player');
+    // console.log('adding player');
 
     // snowmen
     for (let i = 0; i < 15; i++) {
