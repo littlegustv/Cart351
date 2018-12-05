@@ -9,11 +9,13 @@
     <style>
       body {
         text-align: center;
+        font-family: monospace;
       }
       canvas {
         width: 640px;
         height: 640px;
         margin: auto;
+        border: 1px solid black;
       }
       #images {
         display: none;
@@ -30,6 +32,7 @@
     <main>
       <h4>instructions</h4>
       <p>use LEFT and RIGHT arrow keys to turn.  collect all the items on your list, but be careful about the impact you have</p>
+      <p>refresh the page to start over!</p>
     </main>
     <section id="images">
       <img src="images/bird.png" alt="">

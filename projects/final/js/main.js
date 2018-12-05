@@ -633,6 +633,7 @@ $(document).ready(function () {
 
     // ... create named objects
     player = new Player(0, 0, assets['footprint']);
+    player.angle = Math.random() * 2 *  Math.PI;
     player.velocity = {x: 0, y: 0};
     player.speed = 48;
     entities.push(player);
